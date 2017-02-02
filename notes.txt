@@ -1,1 +1,7 @@
 
+Todo before 02/07 :
+
+  init project
+  create semaphore
+  create map for first player
+  
