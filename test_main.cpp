@@ -7,6 +7,17 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <sys/mman.h>
+#include <semaphore.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 using namespace std;
 
 #define SM_SEM_NAME "/PD_semaphore"
@@ -47,7 +58,18 @@ void initSharedMemory(int rows, int columns){
 
 }
 
+void initGameMap(){
+
+  return;
+}
 void readSharedMemory(){
+
+return;
+}
+
+void readMapToSharedMemory(){
+
+
 
 
 }
@@ -60,16 +82,15 @@ int main()
 
    if(sem==SEM_FAILED && errno!=EEXIST)
    {
-     perror("sem failed");
+     perror("semaphore creation error!!");
      exit(1);
    }
 
    if(sem!=SEM_FAILED)
    {
      cout<<"first player"<<endl;
-     //I am the first player
-     //shm_open();
 
+     initSharedMemory(10, 10)
      //read() //from section 2 of the man-pages
      //write() //from section 2 of the man-pages
 
