@@ -23,7 +23,15 @@ using namespace std;
 #define SM_SEM_NAME "/PD_semaphore"
 #define SM_NAME "/PD_SharedMemory"
 
+struct mapboard{
+  int rows;
+  int cols;
+  unsigned char players;
+  unsigned char map[0];
+}
 
+// mapboard * mbp;
+// mpb = (mapboard * ) mmap(...);
 /*
 unsigned char players_playing;
 if(players_playing & G_ANYP == false) //nobody is playing
