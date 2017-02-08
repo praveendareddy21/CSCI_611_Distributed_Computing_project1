@@ -68,6 +68,7 @@ void initGameMap(){
 
   return;
 }
+
 mapboard * readSharedMemory(){
   int fd, size, rows, columns;
   mapboard * mbp;
@@ -81,6 +82,29 @@ mapboard * readSharedMemory(){
 return mbp;
 }
 
+vector<vector< char > > readMapFromFile(char * mapFile,int &rows,int &cols,int &golds){
+  vector<vector< char > > mapVector;
+  vector< char > temp;
+    vector< string > temp1;
+    string line;
+  char c;
+  ifstream mapStream(mapFile);
+  mapStream >>golds;
+  cout<<"golds "<<golds;
+  mapStream.get(c);
+
+  while(getline(mapStream,line))
+  {
+     temp1.push_back(line);
+     cols = line.length();
+
+  }
+cout<<"ve size "<<temp1.size();
+
+
+
+  return mapVector;
+}
 void readMapToSharedMemory(){
 
 
@@ -91,7 +115,12 @@ void readMapToSharedMemory(){
 int main()
 {
     mapboard * mbp = NULL;
-    int rows, cols;
+    int rows, cols, goldCount;
+    char * mapFile = "mymap.txt";
+    vector<vector< char > > mapVector;
+    mapVector = readMapFromFile(mapFile, rows, cols, goldCount);
+    return 0;
+
 
    sem_t* sem=sem_open(SM_SEM_NAME, O_CREAT|O_EXCL,
        S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP| S_IROTH| S_IWOTH,1);
