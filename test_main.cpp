@@ -198,6 +198,13 @@ int placeIncrementPlayerOnMap(mapboard * mbp,int & thisPlayerLoc){
   return thisPlayer;
 }
 
+void processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlayer, int keyInput){
+
+
+
+return;
+}
+
 int main()
 {
     mapboard * mbp = NULL;
@@ -252,6 +259,10 @@ int main()
    while(keyInput != 81){ // game loop
      keyInput = goldMine.getKey();
      // code for player moves
+     if(keyInput ==  108 || keyInput ==  107 || keyInput ==  106 || keyInput ==  104 ) // for l, k, j, h
+     {
+       processPlayerMove();
+     }
      goldMine.drawMap();
 
 
