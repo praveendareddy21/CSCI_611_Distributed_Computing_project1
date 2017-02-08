@@ -85,8 +85,7 @@ return mbp;
 vector<vector< char > > readMapFromFile(char * mapFile,int &rows,int &cols,int &golds){
   vector<vector< char > > mapVector;
   vector< char > temp;
-    vector< string > temp1;
-    string line;
+  string line;
   char c;
   ifstream mapStream(mapFile);
   mapStream >>golds;
@@ -95,14 +94,13 @@ vector<vector< char > > readMapFromFile(char * mapFile,int &rows,int &cols,int &
 
   while(getline(mapStream,line))
   {
-     temp1.push_back(line);
-     cols = line.length();
-
+     for(int i=0; i < line.length(); i++){
+       temp.push_back(line[i]);
+     }
+     mapVector.push_back(temp);
+     temp.clear();
   }
-cout<<"ve size "<<temp1.size();
-
-
-
+  cout<<"ve size "<<mapVector.size()<<" col "<<mapVector[0].size()<<endl;;
   return mapVector;
 }
 void readMapToSharedMemory(){
