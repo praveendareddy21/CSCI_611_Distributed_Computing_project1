@@ -21,8 +21,8 @@
 
 using namespace std;
 
-#define SM_SEM_NAME "/PD_semaphore_2"
-#define SM_NAME "/PD_SharedMemory_2"
+#define SM_SEM_NAME "/PD_semaphore_3"
+#define SM_NAME "/PD_SharedMemory_3"
 
 struct mapboard{
   int rows;
@@ -128,7 +128,7 @@ void placeElementOnMap(mapboard * mbp, int elem){
    int pos, total_pos =  mbp->rows * mbp->cols;
    while(1){
      pos = rand() % total_pos;
-     cout<<"rand "<<pos<<endl;
+     //cout<<"rand "<<pos<<endl;
 
      if(mbp->map[pos] == G_WALL)
       continue;
@@ -136,12 +136,30 @@ void placeElementOnMap(mapboard * mbp, int elem){
        continue;
      if(mbp->map[pos] == G_FOOL)
         continue;
+     if(mbp->map[pos] == G_PLR0)
+        continue;
+     if(mbp->map[pos] == G_PLR1)
+        continue;
+     if(mbp->map[pos] == G_PLR2)
+        continue;
+     if(mbp->map[pos] == G_PLR3)
+       continue;
+     if(mbp->map[pos] == G_PLR4)
+       continue;
+
 
     mbp->map[pos] = elem;
     break;
    }
-
 }
+
+void placeGoldsOnMap(mapboard * mbp, int goldCount){
+  placeElementOnMap(mbp, G_GOLD);
+  for(int i= 0; i< (goldCount-1) ; i++)
+    placeElementOnMap(mbp, G_FOOL);
+  return;
+}
+
 int main()
 {
     mapboard * mbp = NULL;
@@ -177,6 +195,8 @@ int main()
      mbp->players = 0;
      mp = mbp->map;
      initGameMap(mp, mapVector);
+     placeGoldsOnMap(mbp, goldCount);
+     placeElementOnMap(mbp, G_PLR0);
      cout<<"shm init done"<<endl;
 
 
@@ -193,7 +213,7 @@ int main()
      cout<<"rows "<<rows<<"cols "<<cols<<endl;
      //not the first player
    }
-   
+
 
    Map goldMine(reinterpret_cast<const unsigned char*>(mp),rows,cols);
 
