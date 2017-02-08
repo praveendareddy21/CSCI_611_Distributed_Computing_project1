@@ -20,8 +20,8 @@
 
 using namespace std;
 
-#define SM_SEM_NAME "/PD_semaphore"
-#define SM_NAME "/PD_SharedMemory"
+#define SM_SEM_NAME "/PD_semaphore_1"
+#define SM_NAME "/PD_SharedMemory_1"
 
 struct mapboard{
   int rows;
@@ -64,7 +64,7 @@ mapboard * initSharedMemory(int rows, int columns){
   return mbp;
 }
 
-void initGameMap(){
+void initGameMap(char * mp, vector<vector< char > > mapVector ){
 
   return;
 }
@@ -82,7 +82,7 @@ mapboard * readSharedMemory(){
 return mbp;
 }
 
-vector<vector< char > > readMapFromFile(char * mapFile,int &rows,int &cols,int &golds){
+vector<vector< char > > readMapFromFile(char * mapFile, int &golds){
   vector<vector< char > > mapVector;
   vector< char > temp;
   string line;
@@ -115,9 +115,10 @@ int main()
     mapboard * mbp = NULL;
     int rows, cols, goldCount;
     char * mapFile = "mymap.txt";
+
+    unsigned char * mp; //map pointer
     vector<vector< char > > mapVector;
-    mapVector = readMapFromFile(mapFile, rows, cols, goldCount);
-    return 0;
+
 
 
    sem_t* sem=sem_open(SM_SEM_NAME, O_CREAT|O_EXCL,
@@ -133,9 +134,16 @@ int main()
    {
      cout<<"first player"<<endl;
 
-     mbp = initSharedMemory(10, 18);
-     mbp->rows = 10;
-     mbp->cols = 18;
+     mapVector = readMapFromFile(mapFile, goldCount);
+     rows = mapVector.size();
+     cols = mapVector[0].size();
+     cout<<"rows "<<rows<<"cols "<<cols<<endl;
+
+     mbp = initSharedMemory(rows, cols);
+     mbp->rows = rows;
+     mbp->cols = cols;
+     mbp->players = 0;
+     mp = mbp->map;
      cout<<"shm init done"<<endl;
     // mbp->map = 10;
 
