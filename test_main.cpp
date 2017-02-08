@@ -21,8 +21,8 @@
 
 using namespace std;
 
-#define SM_SEM_NAME "/PD_semaphore_10"
-#define SM_NAME "/PD_SharedMemory_10"
+#define SM_SEM_NAME "/PD_semaphore_14"
+#define SM_NAME "/PD_SharedMemory_14"
 
 struct mapboard{
   int rows;
@@ -109,8 +109,9 @@ void readMapToSharedMemory(){
 
 }
 
-void initGameMap(unsigned char * mp, vector<vector< char > > mapVector ){
-
+void initGameMap(mapboard * mbp, vector<vector< char > > mapVector ){
+  unsigned char * mp;
+  mp = mbp->map;
   for(unsigned i=0;i<mapVector.size();i++){
     for(unsigned j=0;j<mapVector[i].size();j++){
       if(mapVector[i][j]==' ')
@@ -123,7 +124,7 @@ void initGameMap(unsigned char * mp, vector<vector< char > > mapVector ){
   return;
 }
 
-void placeElementOnMap(mapboard * mbp, int elem){
+int placeElementOnMap(mapboard * mbp, int elem){
    srand(time(NULL));
    int pos, total_pos =  mbp->rows * mbp->cols;
    while(1){
@@ -151,6 +152,12 @@ void placeElementOnMap(mapboard * mbp, int elem){
     mbp->map[pos] = elem;
     break;
    }
+   return pos;
+}
+
+void clearElementOnMap(){
+
+
 }
 
 void placeGoldsOnMap(mapboard * mbp, int goldCount){
@@ -160,7 +167,7 @@ void placeGoldsOnMap(mapboard * mbp, int goldCount){
   return;
 }
 
-int placeIncrementPlayerOnMap(mapboard * mbp){
+int placeIncrementPlayerOnMap(mapboard * mbp,int & thisPlayerLoc){
   int thisPlayer = -1;
     if(!(mbp->playing & G_ANYP) ) // no one
     {
@@ -187,14 +194,14 @@ int placeIncrementPlayerOnMap(mapboard * mbp){
       mbp->playing |= G_PLR4;
       thisPlayer = G_PLR4;
     }
-  placeElementOnMap(mbp, thisPlayer);
+  thisPlayerLoc = placeElementOnMap(mbp, thisPlayer);
   return thisPlayer;
 }
 
 int main()
 {
     mapboard * mbp = NULL;
-    int rows, cols, goldCount, thisPlayer = 0;
+    int rows, cols, goldCount, thisPlayer = 0, thisPlayerLoc= 0, keyInput = 0;
     char * mapFile = "mymap.txt";
 
     unsigned char * mp; //map pointer
@@ -224,31 +231,31 @@ int main()
      mbp->rows = rows;
      mbp->cols = cols;
      mbp->playing = 0;
-     mp = mbp->map;
-     initGameMap(mp, mapVector);
+
+     initGameMap(mbp, mapVector);
      placeGoldsOnMap(mbp, goldCount);
-     placeElementOnMap(mbp, G_PLR0);
-     mbp->playing |= G_PLR0;
      cout<<"shm init done"<<endl;
-
-
-
    }
    else
    {
      cout<<"not first player"<<endl;
      mbp = readSharedMemory();
-     //mbp = gb->board;
      rows = mbp->rows;
      cols = mbp->cols;
-     mp = mbp->map;
-     thisPlayer = placeIncrementPlayerOnMap(mbp);
-     cout<<"rows "<<rows<<"cols "<<cols<<"player "<<thisPlayer<<endl;
    }
 
-
+   thisPlayer = placeIncrementPlayerOnMap(mbp, thisPlayerLoc);
+   cout<<"rows "<<rows<<"cols "<<cols<<"player "<<thisPlayer<<"player loc "<<thisPlayerLoc<<endl;
 
    Map goldMine(reinterpret_cast<const unsigned char*>(mbp->map),rows,cols);
+
+   while(keyInput != 81){ // game loop
+     keyInput = goldMine.getKey();
+     // code for player moves
+     goldMine.drawMap();
+
+
+   }
 
 
      //close();
