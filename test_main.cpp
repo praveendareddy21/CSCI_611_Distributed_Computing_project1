@@ -108,6 +108,7 @@ void readMapToSharedMemory(){
 
 
 }
+
 void initGameMap(unsigned char * mp, vector<vector< char > > mapVector ){
 
   for(unsigned i=0;i<mapVector.size();i++){
@@ -122,6 +123,25 @@ void initGameMap(unsigned char * mp, vector<vector< char > > mapVector ){
   return;
 }
 
+void placeElementOnMap(mapboard * mbp, int elem){
+   srand(time(NULL));
+   int pos, total_pos =  mbp->rows * mbp->cols;
+   while(1){
+     pos = rand() % total_pos;
+     cout<<"rand "<<pos<<endl;
+
+     if(mbp->map[pos] == G_WALL)
+      continue;
+     if(mbp->map[pos] == G_GOLD)
+       continue;
+     if(mbp->map[pos] == G_FOOL)
+        continue;
+
+    mbp->map[pos] = elem;
+    break;
+   }
+
+}
 int main()
 {
     mapboard * mbp = NULL;
@@ -159,10 +179,7 @@ int main()
      initGameMap(mp, mapVector);
      cout<<"shm init done"<<endl;
 
-    // mbp->map = 10;
 
-     //read() //from section 2 of the man-pages
-     //write() //from section 2 of the man-pages
 
    }
    else
@@ -176,7 +193,7 @@ int main()
      cout<<"rows "<<rows<<"cols "<<cols<<endl;
      //not the first player
    }
-
+   
 
    Map goldMine(reinterpret_cast<const unsigned char*>(mp),rows,cols);
 
