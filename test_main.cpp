@@ -28,7 +28,7 @@ struct mapboard{
   int cols;
   unsigned char players;
   unsigned char map[0];
-}
+};
 
 // mapboard * mbp;
 // mpb = (mapboard * ) mmap(...);
@@ -54,25 +54,31 @@ int shm_fd=shm_open("/TAG_mymap",...); //read in file to determine # rows & cols
 
  map_pointer[34]&=~PLR_0; */
 
-void initSharedMemory(int rows, int columns){
+mapboard * initSharedMemory(int rows, int columns){
   int fd, size;
-  char * map_pointer;
+  mapboard * mbp;
   fd = shm_open(SM_NAME,O_RDWR|O_CREAT,S_IRUSR|S_IWUSR);
-  size = (rows*columns);
+  size = (rows*columns + sizeof(mapboard));
   ftruncate(fd, size);
-  map_pointer = (char*) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-
-  return;   //(GameBoard*) mmap (NULL, countOT_READ|PROT_WRITE, MAP_SHARED, my_file_descriptor, 0);
-
+  mbp = (mapboard*) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+  return mbp;
 }
 
 void initGameMap(){
 
   return;
 }
-void readSharedMemory(){
+mapboard * readSharedMemory(){
+  int fd, size, rows, columns;
+  mapboard * mbp;
+  fd = shm_open(SM_NAME,O_RDWR, S_IRUSR|S_IWUSR);
+  read(fd,&rows,sizeof(int));
+  read(fd,&columns,sizeof(int));
+  size = (rows*columns + sizeof(mapboard));
+  ftruncate(fd, size);
+  mbp = (mapboard*) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 
-return;
+return mbp;
 }
 
 void readMapToSharedMemory(){
@@ -84,6 +90,8 @@ void readMapToSharedMemory(){
 
 int main()
 {
+    mapboard * mbp = NULL;
+    int rows, cols;
 
    sem_t* sem=sem_open(SM_SEM_NAME, O_CREAT|O_EXCL,
        S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP| S_IROTH| S_IWOTH,1);
@@ -98,7 +106,12 @@ int main()
    {
      cout<<"first player"<<endl;
 
-     initSharedMemory(10, 10)
+     mbp = initSharedMemory(10, 18);
+     mbp->rows = 10;
+     mbp->cols = 18;
+     cout<<"shm init done"<<endl;
+    // mbp->map = 10;
+
      //read() //from section 2 of the man-pages
      //write() //from section 2 of the man-pages
 
@@ -106,6 +119,11 @@ int main()
    else
    {
      cout<<"not first player"<<endl;
+     mbp = readSharedMemory();
+     //mbp = gb->board;
+     rows = mbp->rows;
+     cols = mbp->cols;
+     cout<<"rows "<<rows<<"cols "<<cols<<endl;
      //not the first player
    }
 
