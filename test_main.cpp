@@ -21,8 +21,8 @@
 
 using namespace std;
 
-#define SM_SEM_NAME "/PD_semaphore_14"
-#define SM_NAME "/PD_SharedMemory_14"
+#define SM_SEM_NAME "/PD_semaphore_17"
+#define SM_NAME "/PD_SharedMemory_17"
 
 struct mapboard{
   int rows;
@@ -31,29 +31,6 @@ struct mapboard{
   unsigned char map[0];
 };
 
-// mapboard * mbp;
-// mpb = (mapboard * ) mmap(...);
-/*
-unsigned char players_playing;
-if(players_playing & G_ANYP == false) //nobody is playing
-if(players_playing == 0) //nobody is playing
-if(players_playing & G_PLR2)//true if third player is playing
-*/
-
-/*
-int shm_fd=shm_open("/TAG_mymap",...); //read in file to determine # rows & cols
- ftruncate(shm_fd, rows*cols);
-
- char* map_pointer;//pointer to shared memory
- map_pointer=(char*)mmap(NULL,rows*cols, PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
-
-
- //read in the map a second time
- //loop
-    if(char=='*')
-       map_pointer[i]=G_WALL;
-
- map_pointer[34]&=~PLR_0; */
 
 mapboard * initSharedMemory(int rows, int columns){
   int fd, size;
@@ -64,7 +41,6 @@ mapboard * initSharedMemory(int rows, int columns){
   mbp = (mapboard*) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
   return mbp;
 }
-
 
 
 mapboard * readSharedMemory(){
@@ -100,13 +76,6 @@ vector<vector< char > > readMapFromFile(char * mapFile, int &golds){
   }
   cout<<"ve size "<<mapVector.size()<<" col "<<mapVector[0].size()<<endl;;
   return mapVector;
-}
-
-void readMapToSharedMemory(){
-
-
-
-
 }
 
 void initGameMap(mapboard * mbp, vector<vector< char > > mapVector ){
@@ -169,7 +138,7 @@ void placeGoldsOnMap(mapboard * mbp, int goldCount){
 
 int placeIncrementPlayerOnMap(mapboard * mbp,int & thisPlayerLoc){
   int thisPlayer = -1;
-    if(!(mbp->playing & G_ANYP) ) // no one
+    if(!(mbp->playing & G_ANYP) ) // no one is playing
     {
       mbp->playing |= G_PLR0;
       thisPlayer = G_PLR0;
@@ -198,9 +167,61 @@ int placeIncrementPlayerOnMap(mapboard * mbp,int & thisPlayerLoc){
   return thisPlayer;
 }
 
+bool isCurrentMoveValid(mapboard * mbp, int currentPos , int nextPos){
+  unsigned char * mp;
+  mp = mbp->map;
+  if(mp[nextPos] == G_WALL || mp[nextPos] == G_PLR0 || mp[nextPos] == G_PLR1 || mp[nextPos] == G_PLR2 || mp[nextPos] == G_PLR3 || mp[nextPos] == G_PLR4)
+    return false;
+  else
+    return true;
+}
+
 void processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlayer, int keyInput){
+  unsigned char * mp;
+  mp = mbp->map;
+  int nextPos = 0, cols = mbp->cols;
+  switch (keyInput) {
+    case 108: // key l move right
+      nextPos = thisPlayerLoc + 1;
+      if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
+          cout<<"l"<<endl;
+          mp[thisPlayerLoc] &= ~thisPlayer;
+          thisPlayerLoc = nextPos;
+          mp[thisPlayerLoc] |= thisPlayer;
+      }
+      break;
 
+    case 104: // key h move left
+      nextPos = thisPlayerLoc - 1;
+      if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
+          cout<<"h"<<endl;
+          mp[thisPlayerLoc] &= ~thisPlayer;
+          thisPlayerLoc = nextPos;
+          mp[thisPlayerLoc] |= thisPlayer;
+      }
+      break;
 
+    case 107: // key k move up
+      nextPos = thisPlayerLoc - cols;
+      if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
+          cout<<"k"<<endl;
+          mp[thisPlayerLoc] &= ~thisPlayer;
+          thisPlayerLoc = nextPos;
+          mp[thisPlayerLoc] |= thisPlayer;
+      }
+      break;
+
+    case 106: // key j move down
+      nextPos = thisPlayerLoc + cols ;
+      if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
+          cout<<"j"<<endl;
+          mp[thisPlayerLoc] &= ~thisPlayer;
+          thisPlayerLoc = nextPos;
+          mp[thisPlayerLoc] |= thisPlayer;
+      }
+      break;
+
+  }
 
 return;
 }
@@ -210,11 +231,8 @@ int main()
     mapboard * mbp = NULL;
     int rows, cols, goldCount, thisPlayer = 0, thisPlayerLoc= 0, keyInput = 0;
     char * mapFile = "mymap.txt";
-
     unsigned char * mp; //map pointer
     vector<vector< char > > mapVector;
-
-
 
    sem_t* sem=sem_open(SM_SEM_NAME, O_CREAT|O_EXCL,
        S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP| S_IROTH| S_IWOTH,1);
@@ -261,18 +279,20 @@ int main()
      // code for player moves
      if(keyInput ==  108 || keyInput ==  107 || keyInput ==  106 || keyInput ==  104 ) // for l, k, j, h
      {
-       processPlayerMove();
+       processPlayerMove(mbp, thisPlayerLoc,  thisPlayer, keyInput);
      }
      goldMine.drawMap();
 
 
    }
 
-
-     //close();
+   //close();
 
    //some other place in our code. If we are the last player
      //shm_unlink();//delete shared memory
 
+
+
+  cout<<"out at end"<<endl;
   return 0;
 }
