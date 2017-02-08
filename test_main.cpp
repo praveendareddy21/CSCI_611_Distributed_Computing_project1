@@ -64,10 +64,7 @@ mapboard * initSharedMemory(int rows, int columns){
   return mbp;
 }
 
-void initGameMap(char * mp, vector<vector< char > > mapVector ){
 
-  return;
-}
 
 mapboard * readSharedMemory(){
   int fd, size, rows, columns;
@@ -103,11 +100,25 @@ vector<vector< char > > readMapFromFile(char * mapFile, int &golds){
   cout<<"ve size "<<mapVector.size()<<" col "<<mapVector[0].size()<<endl;;
   return mapVector;
 }
+
 void readMapToSharedMemory(){
 
 
 
 
+}
+void initGameMap(char * mp, vector<vector< char > > mapVector ){
+
+  for(unsigned i=0;i<mapVector.size();i++){
+    for(unsigned j=0;j<mapVector[i].size();j++){
+      if(mapVector[i][j]==' ')
+        *mp=0;
+      else if(mapVector[i][j]== '*')
+        *mp=G_WALL;
+      mp++;
+    }
+  }
+  return;
 }
 
 int main()
@@ -145,6 +156,7 @@ int main()
      mbp->players = 0;
      mp = mbp->map;
      cout<<"shm init done"<<endl;
+
     // mbp->map = 10;
 
      //read() //from section 2 of the man-pages
