@@ -21,13 +21,13 @@
 
 using namespace std;
 
-#define SM_SEM_NAME "/PD_semaphore_3"
-#define SM_NAME "/PD_SharedMemory_3"
+#define SM_SEM_NAME "/PD_semaphore_10"
+#define SM_NAME "/PD_SharedMemory_10"
 
 struct mapboard{
   int rows;
   int cols;
-  unsigned char players;
+  unsigned char playing;
   unsigned char map[0];
 };
 
@@ -160,10 +160,41 @@ void placeGoldsOnMap(mapboard * mbp, int goldCount){
   return;
 }
 
+int placeIncrementPlayerOnMap(mapboard * mbp){
+  int thisPlayer = -1;
+    if(!(mbp->playing & G_ANYP) ) // no one
+    {
+      mbp->playing |= G_PLR0;
+      thisPlayer = G_PLR0;
+    }
+    else if(!(mbp->playing & G_PLR0) ){
+      mbp->playing |= G_PLR0;
+      thisPlayer = G_PLR0;
+    }
+    else if(!(mbp->playing & G_PLR1) ){
+      mbp->playing |= G_PLR1;
+      thisPlayer = G_PLR1;
+    }
+    else if(!(mbp->playing & G_PLR2) ){
+      mbp->playing |= G_PLR2;
+      thisPlayer = G_PLR2;
+    }
+    else if(!(mbp->playing & G_PLR3) ){
+      mbp->playing |= G_PLR3;
+      thisPlayer = G_PLR3;
+    }
+    else if(!(mbp->playing & G_PLR4) ){
+      mbp->playing |= G_PLR4;
+      thisPlayer = G_PLR4;
+    }
+  placeElementOnMap(mbp, thisPlayer);
+  return thisPlayer;
+}
+
 int main()
 {
     mapboard * mbp = NULL;
-    int rows, cols, goldCount;
+    int rows, cols, goldCount, thisPlayer = 0;
     char * mapFile = "mymap.txt";
 
     unsigned char * mp; //map pointer
@@ -192,11 +223,12 @@ int main()
      mbp = initSharedMemory(rows, cols);
      mbp->rows = rows;
      mbp->cols = cols;
-     mbp->players = 0;
+     mbp->playing = 0;
      mp = mbp->map;
      initGameMap(mp, mapVector);
      placeGoldsOnMap(mbp, goldCount);
      placeElementOnMap(mbp, G_PLR0);
+     mbp->playing |= G_PLR0;
      cout<<"shm init done"<<endl;
 
 
@@ -210,12 +242,13 @@ int main()
      rows = mbp->rows;
      cols = mbp->cols;
      mp = mbp->map;
-     cout<<"rows "<<rows<<"cols "<<cols<<endl;
-     //not the first player
+     thisPlayer = placeIncrementPlayerOnMap(mbp);
+     cout<<"rows "<<rows<<"cols "<<cols<<"player "<<thisPlayer<<endl;
    }
 
 
-   Map goldMine(reinterpret_cast<const unsigned char*>(mp),rows,cols);
+
+   Map goldMine(reinterpret_cast<const unsigned char*>(mbp->map),rows,cols);
 
 
      //close();
