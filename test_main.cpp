@@ -17,11 +17,12 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include "Map.h"
 
 using namespace std;
 
-#define SM_SEM_NAME "/PD_semaphore_1"
-#define SM_NAME "/PD_SharedMemory_1"
+#define SM_SEM_NAME "/PD_semaphore_2"
+#define SM_NAME "/PD_SharedMemory_2"
 
 struct mapboard{
   int rows;
@@ -107,7 +108,7 @@ void readMapToSharedMemory(){
 
 
 }
-void initGameMap(char * mp, vector<vector< char > > mapVector ){
+void initGameMap(unsigned char * mp, vector<vector< char > > mapVector ){
 
   for(unsigned i=0;i<mapVector.size();i++){
     for(unsigned j=0;j<mapVector[i].size();j++){
@@ -155,6 +156,7 @@ int main()
      mbp->cols = cols;
      mbp->players = 0;
      mp = mbp->map;
+     initGameMap(mp, mapVector);
      cout<<"shm init done"<<endl;
 
     // mbp->map = 10;
@@ -170,15 +172,19 @@ int main()
      //mbp = gb->board;
      rows = mbp->rows;
      cols = mbp->cols;
+     mp = mbp->map;
      cout<<"rows "<<rows<<"cols "<<cols<<endl;
      //not the first player
    }
+
+
+   Map goldMine(reinterpret_cast<const unsigned char*>(mp),rows,cols);
+
 
      //close();
 
    //some other place in our code. If we are the last player
      //shm_unlink();//delete shared memory
 
-  cout<<"out before main return"<<endl;
   return 0;
 }
