@@ -170,6 +170,16 @@ int placeIncrementPlayerOnMap(mapboard * mbp,int & thisPlayerLoc){
 bool isCurrentMoveValid(mapboard * mbp, int currentPos , int nextPos){
   unsigned char * mp;
   mp = mbp->map;
+  int rows = mbp->rows, cols = mbp->cols;
+  if(currentPos < cols && nextPos < 0)
+    return false;
+  if( currentPos / cols == rows - 1 && nextPos >= rows * cols)
+    return false;
+  if( currentPos % cols == 0 && nextPos == currentPos -1 )
+    return false;
+  if( currentPos % cols == cols - 1 && nextPos == currentPos + 1)
+    return false;
+
   if(mp[nextPos] == G_WALL || mp[nextPos] == G_PLR0 || mp[nextPos] == G_PLR1 || mp[nextPos] == G_PLR2 || mp[nextPos] == G_PLR3 || mp[nextPos] == G_PLR4)
     return false;
   else
