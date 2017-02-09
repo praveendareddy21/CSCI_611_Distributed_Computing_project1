@@ -21,8 +21,8 @@
 
 using namespace std;
 
-#define SM_SEM_NAME "/PD_semaphore_17"
-#define SM_NAME "/PD_SharedMemory_17"
+#define SM_SEM_NAME "/PD_semaphore_0"
+#define SM_NAME "/PD_SharedMemory_0"
 
 struct mapboard{
   int rows;
@@ -296,10 +296,18 @@ int main()
 
    }
 
-   //close();
+   mp[thisPlayerLoc] &= ~thisPlayer;
+   mbp->playing &= ~thisPlayer;
+     //close();
 
    //some other place in our code. If we are the last player
      //shm_unlink();//delete shared memory
+
+   if(!(mbp->playing & G_ANYP) ) // no one is playinh
+   {
+     shm_unlink(SM_SEM);
+     shm_unlink(SM_SEM_NAME);
+   }
 
 
 
