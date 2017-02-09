@@ -305,7 +305,7 @@ int main()
 
    if(!(mbp->playing & G_ANYP) ) // no one is playinh
    {
-     shm_unlink(SM_SEM);
+     shm_unlink(SM_NAME);
      shm_unlink(SM_SEM_NAME);
    }
 
