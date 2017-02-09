@@ -21,8 +21,8 @@
 
 using namespace std;
 
-#define SM_SEM_NAME "/PD_semaphore_0"
-#define SM_NAME "/PD_SharedMemory_0"
+#define SM_SEM_NAME "/PD_semaphore_2"
+#define SM_NAME "/PD_SharedMemory_2"
 
 struct mapboard{
   int rows;
@@ -296,7 +296,7 @@ int main()
 
    }
 
-   mp[thisPlayerLoc] &= ~thisPlayer;
+   mbp->map[thisPlayerLoc] &= ~thisPlayer;
    mbp->playing &= ~thisPlayer;
      //close();
 
