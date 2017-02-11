@@ -315,6 +315,14 @@ int main(int argc, char *argv[])
      if(keyInput ==  108 || keyInput ==  107 || keyInput ==  106 || keyInput ==  104 ) // for l, k, j, h
      { sem_wait(shm_sem);
        notice = processPlayerMove(mbp, thisPlayerLoc,  thisPlayer, keyInput, thisPlayerFoundGold, thisQuitGameloop);
+       if(notice == ""){
+         goldMine.postNotice("empty");
+       }else if(notice == "You found Real Gold!!"){
+         goldMine.postNotice("Real Gold found !!! ");
+
+       }else{
+         goldMine.postNotice("fake Gold found !!! ");
+       }
        sem_post(shm_sem);
      }
      goldMine.drawMap();
