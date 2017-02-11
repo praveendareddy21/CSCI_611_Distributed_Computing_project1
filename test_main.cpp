@@ -18,11 +18,17 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include "Map.h"
+#include <cstring>
 
 using namespace std;
 
-#define SM_SEM_NAME "/PD_semaphore_2"
-#define SM_NAME "/PD_SharedMemory_2"
+
+#define  SHM_SM_NAME "/PD_semaphore_11"
+#define  SHM_NAME "/PD_SharedMemory_11"
+
+
+using namespace std;
+
 
 struct mapboard{
   int rows;
@@ -35,7 +41,7 @@ struct mapboard{
 mapboard * initSharedMemory(int rows, int columns){
   int fd, size;
   mapboard * mbp;
-  fd = shm_open(SM_NAME,O_RDWR|O_CREAT,S_IRUSR|S_IWUSR);
+  fd = shm_open(SHM_NAME,O_RDWR|O_CREAT,S_IRUSR|S_IWUSR);
   size = (rows*columns + sizeof(mapboard));
   ftruncate(fd, size);
   mbp = (mapboard*) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
@@ -46,14 +52,13 @@ mapboard * initSharedMemory(int rows, int columns){
 mapboard * readSharedMemory(){
   int fd, size, rows, columns;
   mapboard * mbp;
-  fd = shm_open(SM_NAME,O_RDWR, S_IRUSR|S_IWUSR);
+  fd = shm_open(SHM_NAME,O_RDWR, S_IRUSR|S_IWUSR);
   read(fd,&rows,sizeof(int));
   read(fd,&columns,sizeof(int));
   size = (rows*columns + sizeof(mapboard));
   ftruncate(fd, size);
   mbp = (mapboard*) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-
-return mbp;
+  return mbp;
 }
 
 vector<vector< char > > readMapFromFile(char * mapFile, int &golds){
@@ -236,32 +241,26 @@ void processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlayer, int 
 return;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    mapboard * mbp = NULL;
-    int rows, cols, goldCount, thisPlayer = 0, thisPlayerLoc= 0, keyInput = 0;
-    char * mapFile = "mymap.txt";
-    unsigned char * mp; //map pointer
-    vector<vector< char > > mapVector;
+  mapboard * mbp = NULL;
+  int rows, cols, goldCount, thisPlayer = 0, thisPlayerLoc= 0, keyInput = 0;
+  char * mapFile = "mymap.txt";
+  unsigned char * mp; //map pointer
+  vector<vector< char > > mapVector;
 
-   sem_t* sem=sem_open(SM_SEM_NAME, O_CREAT|O_EXCL,
-       S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP| S_IROTH| S_IWOTH,1);
-
-   if(sem==SEM_FAILED && errno!=EEXIST)
-   {
-     perror("semaphore creation error!!");
-     exit(1);
-   }
-
-   if(sem!=SEM_FAILED)
-   {
+   sem_t* shm_sem;
+   shm_sem=sem_open(SHM_SM_NAME ,O_RDWR,S_IRUSR|S_IWUSR,1);
+   if(shm_sem == SEM_FAILED)
+   {  shm_sem=sem_open(SHM_SM_NAME,O_CREAT,S_IRUSR|S_IWUSR,1);
      cout<<"first player"<<endl;
-
      mapVector = readMapFromFile(mapFile, goldCount);
      rows = mapVector.size();
      cols = mapVector[0].size();
      cout<<"rows "<<rows<<"cols "<<cols<<endl;
 
+
+     sem_wait(shm_sem);
      mbp = initSharedMemory(rows, cols);
      mbp->rows = rows;
      mbp->cols = cols;
@@ -269,48 +268,55 @@ int main()
 
      initGameMap(mbp, mapVector);
      placeGoldsOnMap(mbp, goldCount);
+     sem_post(shm_sem);
      cout<<"shm init done"<<endl;
+
    }
    else
    {
      cout<<"not first player"<<endl;
+     sem_wait(shm_sem);
      mbp = readSharedMemory();
      rows = mbp->rows;
      cols = mbp->cols;
+     sem_post(shm_sem);
+
    }
 
+   sem_wait(shm_sem);
    thisPlayer = placeIncrementPlayerOnMap(mbp, thisPlayerLoc);
    cout<<"rows "<<rows<<"cols "<<cols<<"player "<<thisPlayer<<"player loc "<<thisPlayerLoc<<endl;
 
    Map goldMine(reinterpret_cast<const unsigned char*>(mbp->map),rows,cols);
+   sem_post(shm_sem);
+
+
 
    while(keyInput != 81){ // game loop
      keyInput = goldMine.getKey();
      // code for player moves
      if(keyInput ==  108 || keyInput ==  107 || keyInput ==  106 || keyInput ==  104 ) // for l, k, j, h
-     {
+     { sem_wait(shm_sem);
        processPlayerMove(mbp, thisPlayerLoc,  thisPlayer, keyInput);
+       sem_post(shm_sem);
      }
      goldMine.drawMap();
 
 
    }
 
+   sem_wait(shm_sem);
    mbp->map[thisPlayerLoc] &= ~thisPlayer;
    mbp->playing &= ~thisPlayer;
-     //close();
+   sem_post(shm_sem);
 
-   //some other place in our code. If we are the last player
-     //shm_unlink();//delete shared memory
 
-   if(!(mbp->playing & G_ANYP) ) // no one is playinh
+
+   if(mbp->playing == 0)
    {
-     shm_unlink(SM_NAME);
-     shm_unlink(SM_SEM_NAME);
+      shm_unlink(SHM_NAME);
+      sem_close(shm_sem);
+      sem_unlink(SHM_SM_NAME);
    }
-
-
-
-  cout<<"out at end"<<endl;
-  return 0;
+   return 0;
 }
