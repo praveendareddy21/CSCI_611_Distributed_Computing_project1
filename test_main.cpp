@@ -179,7 +179,7 @@ bool isCurrentMoveValid(mapboard * mbp, int currentPos , int nextPos){
   if( currentPos % cols == cols - 1 && nextPos == currentPos + 1)
     return false;
 
-  if(mp[nextPos] == G_WALL || mp[nextPos] == G_PLR0 || mp[nextPos] == G_PLR1 || mp[nextPos] == G_PLR2 || mp[nextPos] == G_PLR3 || mp[nextPos] == G_PLR4)
+  if(mp[nextPos] == G_WALL)
     return false;
   else
     return true;
