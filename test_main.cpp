@@ -27,6 +27,7 @@ using namespace std;
 #define REAL_GOLD_MESSAGE "You found Real Gold!!"
 #define FAKE_GOLD_MESSAGE "You found Fool's Gold!!"
 #define EMPTY_MESSAGE ""
+#define YOU_WON_MESSAGE "You Won!"
 
 struct mapboard{
   int rows;
@@ -229,12 +230,18 @@ const char * performGoldCheck(mapboard * mbp, int currentPos, bool & thisPlayerF
 const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlayer, int keyInput, bool & thisPlayerFoundGold, bool & thisQuitGameloop){
   unsigned char * mp;
   const char * emptyMessage = EMPTY_MESSAGE;
+  const char * youWonMessage = YOU_WON_MESSAGE;
   bool quitGameLoop = false;
   mp = mbp->map;
   int nextPos = 0, cols = mbp->cols, goldCheck = -1;
   switch (keyInput) {
     case 108: // key l move right
       nextPos = thisPlayerLoc + 1;
+      if((thisPlayerFoundGold) && isCurrentMoveOffMap(mbp, thisPlayerLoc, nextPos) ){
+        thisQuitGameloop = true;
+        return youWonMessage;
+      }
+
       if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
           cout<<"l"<<endl;
           mp[thisPlayerLoc] &= ~thisPlayer;
@@ -246,6 +253,12 @@ const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlay
 
     case 104: // key h move left
       nextPos = thisPlayerLoc - 1;
+
+      if((thisPlayerFoundGold) && isCurrentMoveOffMap(mbp, thisPlayerLoc, nextPos) ){
+        thisQuitGameloop = true;
+        return youWonMessage;
+      }
+
       if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
           cout<<"h"<<endl;
           mp[thisPlayerLoc] &= ~thisPlayer;
@@ -258,6 +271,12 @@ const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlay
 
     case 107: // key k move up
       nextPos = thisPlayerLoc - cols;
+
+      if((thisPlayerFoundGold) && isCurrentMoveOffMap(mbp, thisPlayerLoc, nextPos) ){
+        thisQuitGameloop = true;
+        return youWonMessage;
+      }
+
       if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
           cout<<"k"<<endl;
           mp[thisPlayerLoc] &= ~thisPlayer;
@@ -270,6 +289,12 @@ const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlay
 
     case 106: // key j move down
       nextPos = thisPlayerLoc + cols ;
+
+      if((thisPlayerFoundGold) && isCurrentMoveOffMap(mbp, thisPlayerLoc, nextPos) ){
+        thisQuitGameloop = true;
+        return youWonMessage;
+      }
+
       if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
           cout<<"j"<<endl;
           mp[thisPlayerLoc] &= ~thisPlayer;
@@ -339,7 +364,7 @@ int main(int argc, char *argv[])
        notice = processPlayerMove(mbp, thisPlayerLoc,  thisPlayer, keyInput, thisPlayerFoundGold, thisQuitGameloop);
        sem_post(shm_sem);
 
-       if(notice == FAKE_GOLD_MESSAGE || notice == REAL_GOLD_MESSAGE){
+       if(notice == FAKE_GOLD_MESSAGE || notice == REAL_GOLD_MESSAGE || notice == YOU_WON_MESSAGE){
          goldMine.postNotice(notice);
        }
 
