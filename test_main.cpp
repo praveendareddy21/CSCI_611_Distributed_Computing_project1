@@ -24,6 +24,9 @@ using namespace std;
 
 #define  SHM_SM_NAME "/PD_semaphore_11"
 #define  SHM_NAME "/PD_SharedMemory_11"
+#define REAL_GOLD_MESSAGE "You found Real Gold!!"
+#define FAKE_GOLD_MESSAGE "You found Fool's Gold!!"
+#define EMPTY_MESSAGE ""
 
 struct mapboard{
   int rows;
@@ -211,9 +214,9 @@ void performGoldCheck(){
 
 const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlayer, int keyInput, bool & thisPlayerFoundGold, bool & thisQuitGameloop){
   unsigned char * mp;
-  const char * realGoldMessage = "You found Real Gold!!";
-  const char * fakeGoldMessage = "You found Fool's Gold!!";
-  const char * emptyMessage = "";
+  const char * realGoldMessage = REAL_GOLD_MESSAGE;
+  const char * fakeGoldMessage = FAKE_GOLD_MESSAGE;
+  const char * emptyMessage = EMPTY_MESSAGE;
   bool quitGameLoop = false;
   mp = mbp->map;
   int nextPos = 0, cols = mbp->cols;
@@ -315,15 +318,13 @@ int main(int argc, char *argv[])
      if(keyInput ==  108 || keyInput ==  107 || keyInput ==  106 || keyInput ==  104 ) // for l, k, j, h
      { sem_wait(shm_sem);
        notice = processPlayerMove(mbp, thisPlayerLoc,  thisPlayer, keyInput, thisPlayerFoundGold, thisQuitGameloop);
-       if(notice == ""){
-         goldMine.postNotice("empty");
-       }else if(notice == "You found Real Gold!!"){
-         goldMine.postNotice("Real Gold found !!! ");
-
-       }else{
-         goldMine.postNotice("fake Gold found !!! ");
-       }
        sem_post(shm_sem);
+
+       if(notice == FAKE_GOLD_MESSAGE || notice == REAL_GOLD_MESSAGE){
+         goldMine.postNotice(notice);
+       }
+
+
      }
      goldMine.drawMap();
    }
