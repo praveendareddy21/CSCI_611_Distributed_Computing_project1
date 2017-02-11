@@ -22,13 +22,8 @@
 
 using namespace std;
 
-
 #define  SHM_SM_NAME "/PD_semaphore_11"
 #define  SHM_NAME "/PD_SharedMemory_11"
-
-
-using namespace std;
-
 
 struct mapboard{
   int rows;
@@ -47,7 +42,6 @@ mapboard * initSharedMemory(int rows, int columns){
   mbp = (mapboard*) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
   return mbp;
 }
-
 
 mapboard * readSharedMemory(){
   int fd, size, rows, columns;
@@ -237,8 +231,7 @@ void processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlayer, int 
       break;
 
   }
-
-return;
+  return;
 }
 
 int main(int argc, char *argv[])
@@ -248,17 +241,17 @@ int main(int argc, char *argv[])
   char * mapFile = "mymap.txt";
   unsigned char * mp; //map pointer
   vector<vector< char > > mapVector;
+  sem_t* shm_sem;
 
-   sem_t* shm_sem;
-   shm_sem=sem_open(SHM_SM_NAME ,O_RDWR,S_IRUSR|S_IWUSR,1);
-   if(shm_sem == SEM_FAILED)
-   {  shm_sem=sem_open(SHM_SM_NAME,O_CREAT,S_IRUSR|S_IWUSR,1);
+  shm_sem = sem_open(SHM_SM_NAME ,O_RDWR,S_IRUSR|S_IWUSR,1);
+  if(shm_sem == SEM_FAILED)
+  {
+     shm_sem=sem_open(SHM_SM_NAME,O_CREAT,S_IRUSR|S_IWUSR,1);
      cout<<"first player"<<endl;
      mapVector = readMapFromFile(mapFile, goldCount);
      rows = mapVector.size();
      cols = mapVector[0].size();
-     cout<<"rows "<<rows<<"cols "<<cols<<endl;
-
+     //cout<<"rows "<<rows<<"cols "<<cols<<endl;
 
      sem_wait(shm_sem);
      mbp = initSharedMemory(rows, cols);
@@ -270,7 +263,6 @@ int main(int argc, char *argv[])
      placeGoldsOnMap(mbp, goldCount);
      sem_post(shm_sem);
      cout<<"shm init done"<<endl;
-
    }
    else
    {
@@ -280,17 +272,12 @@ int main(int argc, char *argv[])
      rows = mbp->rows;
      cols = mbp->cols;
      sem_post(shm_sem);
-
    }
 
    sem_wait(shm_sem);
    thisPlayer = placeIncrementPlayerOnMap(mbp, thisPlayerLoc);
-   cout<<"rows "<<rows<<"cols "<<cols<<"player "<<thisPlayer<<"player loc "<<thisPlayerLoc<<endl;
-
    Map goldMine(reinterpret_cast<const unsigned char*>(mbp->map),rows,cols);
    sem_post(shm_sem);
-
-
 
    while(keyInput != 81){ // game loop
      keyInput = goldMine.getKey();
@@ -301,15 +288,12 @@ int main(int argc, char *argv[])
        sem_post(shm_sem);
      }
      goldMine.drawMap();
-
-
    }
 
    sem_wait(shm_sem);
    mbp->map[thisPlayerLoc] &= ~thisPlayer;
    mbp->playing &= ~thisPlayer;
    sem_post(shm_sem);
-
 
 
    if(mbp->playing == 0)
