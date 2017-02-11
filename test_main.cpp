@@ -166,6 +166,25 @@ int placeIncrementPlayerOnMap(mapboard * mbp,int & thisPlayerLoc){
   return thisPlayer;
 }
 
+
+
+bool isCurrentMoveOffMap(mapboard * mbp, int currentPos , int nextPos){
+  unsigned char * mp;
+  mp = mbp->map;
+  int rows = mbp->rows, cols = mbp->cols;
+  if(currentPos < cols && nextPos < 0)
+    return true;
+  if( currentPos / cols == rows - 1 && nextPos >= rows * cols)
+    return true;
+  if( currentPos % cols == 0 && nextPos == currentPos -1 )
+    return true;
+  if( currentPos % cols == cols - 1 && nextPos == currentPos + 1)
+    return true;
+
+    return false;
+}
+
+
 bool isCurrentMoveValid(mapboard * mbp, int currentPos , int nextPos){
   unsigned char * mp;
   mp = mbp->map;
@@ -185,8 +204,17 @@ bool isCurrentMoveValid(mapboard * mbp, int currentPos , int nextPos){
     return true;
 }
 
-void processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlayer, int keyInput){
+void performGoldCheck(){
+
+
+}
+
+const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlayer, int keyInput, bool & thisPlayerFoundGold, bool & thisQuitGameloop){
   unsigned char * mp;
+  const char * realGoldMessage = "You found Real Gold!!";
+  const char * fakeGoldMessage = "You found Fool's Gold!!";
+  const char * emptyMessage = "";
+  bool quitGameLoop = false;
   mp = mbp->map;
   int nextPos = 0, cols = mbp->cols;
   switch (keyInput) {
@@ -231,14 +259,16 @@ void processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlayer, int 
       break;
 
   }
-  return;
+  return emptyMessage;
 }
 
 int main(int argc, char *argv[])
 {
   mapboard * mbp = NULL;
   int rows, cols, goldCount, thisPlayer = 0, thisPlayerLoc= 0, keyInput = 0;
+  bool thisPlayerFoundGold = false , thisQuitGameloop = false;
   char * mapFile = "mymap.txt";
+  const char * notice;
   unsigned char * mp; //map pointer
   vector<vector< char > > mapVector;
   sem_t* shm_sem;
@@ -284,7 +314,7 @@ int main(int argc, char *argv[])
      // code for player moves
      if(keyInput ==  108 || keyInput ==  107 || keyInput ==  106 || keyInput ==  104 ) // for l, k, j, h
      { sem_wait(shm_sem);
-       processPlayerMove(mbp, thisPlayerLoc,  thisPlayer, keyInput);
+       notice = processPlayerMove(mbp, thisPlayerLoc,  thisPlayer, keyInput, thisPlayerFoundGold, thisQuitGameloop);
        sem_post(shm_sem);
      }
      goldMine.drawMap();
