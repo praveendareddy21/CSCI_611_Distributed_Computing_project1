@@ -207,19 +207,31 @@ bool isCurrentMoveValid(mapboard * mbp, int currentPos , int nextPos){
     return true;
 }
 
-void performGoldCheck(){
+const char * performGoldCheck(mapboard * mbp, int currentPos, bool & thisPlayerFoundGold){
+  const char * realGoldMessage = REAL_GOLD_MESSAGE;
+  const char * fakeGoldMessage = FAKE_GOLD_MESSAGE;
+  const char * emptyMessage = EMPTY_MESSAGE;
 
+  unsigned char * mp;
+  mp = mbp->map;
+  if(mp[currentPos] & G_GOLD)
+    {
+      thisPlayerFoundGold = true;
+      return realGoldMessage;
+    }
+  else if(mp[currentPos] & G_FOOL)
+    return fakeGoldMessage;
+  else
+    return emptyMessage;
 
 }
 
 const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlayer, int keyInput, bool & thisPlayerFoundGold, bool & thisQuitGameloop){
   unsigned char * mp;
-  const char * realGoldMessage = REAL_GOLD_MESSAGE;
-  const char * fakeGoldMessage = FAKE_GOLD_MESSAGE;
   const char * emptyMessage = EMPTY_MESSAGE;
   bool quitGameLoop = false;
   mp = mbp->map;
-  int nextPos = 0, cols = mbp->cols;
+  int nextPos = 0, cols = mbp->cols, goldCheck = -1;
   switch (keyInput) {
     case 108: // key l move right
       nextPos = thisPlayerLoc + 1;
@@ -228,7 +240,8 @@ const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlay
           mp[thisPlayerLoc] &= ~thisPlayer;
           thisPlayerLoc = nextPos;
           mp[thisPlayerLoc] |= thisPlayer;
-      }
+          return performGoldCheck(mbp, thisPlayerLoc, thisPlayerFoundGold);
+          }
       break;
 
     case 104: // key h move left
@@ -238,6 +251,8 @@ const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlay
           mp[thisPlayerLoc] &= ~thisPlayer;
           thisPlayerLoc = nextPos;
           mp[thisPlayerLoc] |= thisPlayer;
+
+          return performGoldCheck(mbp, thisPlayerLoc, thisPlayerFoundGold);
       }
       break;
 
@@ -248,6 +263,8 @@ const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlay
           mp[thisPlayerLoc] &= ~thisPlayer;
           thisPlayerLoc = nextPos;
           mp[thisPlayerLoc] |= thisPlayer;
+
+          return performGoldCheck(mbp, thisPlayerLoc, thisPlayerFoundGold);
       }
       break;
 
@@ -258,6 +275,8 @@ const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlay
           mp[thisPlayerLoc] &= ~thisPlayer;
           thisPlayerLoc = nextPos;
           mp[thisPlayerLoc] |= thisPlayer;
+
+          return performGoldCheck(mbp, thisPlayerLoc, thisPlayerFoundGold);
       }
       break;
 
