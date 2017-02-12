@@ -22,8 +22,8 @@
 
 using namespace std;
 
-#define  SHM_SM_NAME "/PD_semaphore_11"
-#define  SHM_NAME "/PD_SharedMemory_11"
+#define  SHM_SM_NAME "/PD_semaphore"
+#define  SHM_NAME "/PD_SharedMemory"
 #define REAL_GOLD_MESSAGE "You found Real Gold!!"
 #define FAKE_GOLD_MESSAGE "You found Fool's Gold!!"
 #define EMPTY_MESSAGE ""
@@ -127,11 +127,6 @@ int placeElementOnMap(mapboard * mbp, int elem){
    return pos;
 }
 
-void clearElementOnMap(){
-
-
-}
-
 void placeGoldsOnMap(mapboard * mbp, int goldCount){
   placeElementOnMap(mbp, G_GOLD);
   for(int i= 0; i< (goldCount-1) ; i++)
@@ -170,8 +165,6 @@ int placeIncrementPlayerOnMap(mapboard * mbp,int & thisPlayerLoc){
   return thisPlayer;
 }
 
-
-
 bool isCurrentMoveOffMap(mapboard * mbp, int currentPos , int nextPos){
   unsigned char * mp;
   mp = mbp->map;
@@ -187,7 +180,6 @@ bool isCurrentMoveOffMap(mapboard * mbp, int currentPos , int nextPos){
 
     return false;
 }
-
 
 bool isCurrentMoveValid(mapboard * mbp, int currentPos , int nextPos){
   unsigned char * mp;
@@ -237,75 +229,36 @@ const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlay
   switch (keyInput) {
     case 108: // key l move right
       nextPos = thisPlayerLoc + 1;
-      if((thisPlayerFoundGold) && isCurrentMoveOffMap(mbp, thisPlayerLoc, nextPos) ){
-        thisQuitGameloop = true;
-        return youWonMessage;
-      }
-
-      if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
-          cout<<"l"<<endl;
-          mp[thisPlayerLoc] &= ~thisPlayer;
-          thisPlayerLoc = nextPos;
-          mp[thisPlayerLoc] |= thisPlayer;
-          return performGoldCheck(mbp, thisPlayerLoc, thisPlayerFoundGold);
-          }
       break;
 
     case 104: // key h move left
       nextPos = thisPlayerLoc - 1;
-
-      if((thisPlayerFoundGold) && isCurrentMoveOffMap(mbp, thisPlayerLoc, nextPos) ){
-        thisQuitGameloop = true;
-        return youWonMessage;
-      }
-
-      if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
-          cout<<"h"<<endl;
-          mp[thisPlayerLoc] &= ~thisPlayer;
-          thisPlayerLoc = nextPos;
-          mp[thisPlayerLoc] |= thisPlayer;
-
-          return performGoldCheck(mbp, thisPlayerLoc, thisPlayerFoundGold);
-      }
       break;
 
     case 107: // key k move up
       nextPos = thisPlayerLoc - cols;
-
-      if((thisPlayerFoundGold) && isCurrentMoveOffMap(mbp, thisPlayerLoc, nextPos) ){
-        thisQuitGameloop = true;
-        return youWonMessage;
-      }
-
-      if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
-          cout<<"k"<<endl;
-          mp[thisPlayerLoc] &= ~thisPlayer;
-          thisPlayerLoc = nextPos;
-          mp[thisPlayerLoc] |= thisPlayer;
-
-          return performGoldCheck(mbp, thisPlayerLoc, thisPlayerFoundGold);
-      }
       break;
 
     case 106: // key j move down
       nextPos = thisPlayerLoc + cols ;
-
-      if((thisPlayerFoundGold) && isCurrentMoveOffMap(mbp, thisPlayerLoc, nextPos) ){
-        thisQuitGameloop = true;
-        return youWonMessage;
-      }
-
-      if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
-          cout<<"j"<<endl;
-          mp[thisPlayerLoc] &= ~thisPlayer;
-          thisPlayerLoc = nextPos;
-          mp[thisPlayerLoc] |= thisPlayer;
-
-          return performGoldCheck(mbp, thisPlayerLoc, thisPlayerFoundGold);
-      }
       break;
 
   }
+
+  if((thisPlayerFoundGold) && isCurrentMoveOffMap(mbp, thisPlayerLoc, nextPos) ){
+    thisQuitGameloop = true;
+    return youWonMessage;
+  }
+
+  if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
+    cout<<"j"<<endl;
+    mp[thisPlayerLoc] &= ~thisPlayer;
+    thisPlayerLoc = nextPos;
+    mp[thisPlayerLoc] |= thisPlayer;
+
+    return performGoldCheck(mbp, thisPlayerLoc, thisPlayerFoundGold);
+  }
+
   return emptyMessage;
 }
 
@@ -338,6 +291,7 @@ int main(int argc, char *argv[])
 
      initGameMap(mbp, mapVector);
      placeGoldsOnMap(mbp, goldCount);
+     thisPlayer = placeIncrementPlayerOnMap(mbp, thisPlayerLoc);
      sem_post(shm_sem);
      cout<<"shm init done"<<endl;
    }
@@ -348,11 +302,11 @@ int main(int argc, char *argv[])
      mbp = readSharedMemory();
      rows = mbp->rows;
      cols = mbp->cols;
+     thisPlayer = placeIncrementPlayerOnMap(mbp, thisPlayerLoc);
      sem_post(shm_sem);
    }
 
    sem_wait(shm_sem);
-   thisPlayer = placeIncrementPlayerOnMap(mbp, thisPlayerLoc);
    Map goldMine(reinterpret_cast<const unsigned char*>(mbp->map),rows,cols);
    sem_post(shm_sem);
 
@@ -368,7 +322,8 @@ int main(int argc, char *argv[])
          goldMine.postNotice(notice);
        }
 
-
+       if(thisQuitGameloop)
+        break;
      }
      goldMine.drawMap();
    }
