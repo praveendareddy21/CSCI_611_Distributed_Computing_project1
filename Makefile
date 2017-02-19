@@ -1,3 +1,5 @@
+all:test_main
+
 test_main: test_main.cpp libmap.a goldchase.h
 	g++ test_main.cpp -o test_main -L. -lpthread -lmap -lpanel -lncurses -lrt
 
@@ -8,4 +10,4 @@ Map.o: Map.cpp Map.h
 	g++ -c Map.cpp
 
 clean:
-	rm -f Screen.o Map.o libmap.a test_prg
+	rm -f Screen.o Map.o libmap.a test_main
