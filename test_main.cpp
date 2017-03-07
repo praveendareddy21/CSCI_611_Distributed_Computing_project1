@@ -128,7 +128,8 @@ int placeElementOnMap(mapboard * mbp, int elem){
 }
 
 void placeGoldsOnMap(mapboard * mbp, int goldCount){
-  placeElementOnMap(mbp, G_GOLD);
+  if(goldCount > 0)
+    placeElementOnMap(mbp, G_GOLD);
   for(int i= 0; i< (goldCount-1) ; i++)
     placeElementOnMap(mbp, G_FOOL);
   return;
