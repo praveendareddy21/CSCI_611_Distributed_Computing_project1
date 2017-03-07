@@ -22,8 +22,8 @@
 
 using namespace std;
 
-#define  SHM_SM_NAME "/PD_semaphore"
-#define  SHM_NAME "/PD_SharedMemory"
+#define  SHM_SM_NAME "/PD_semaphore_1"
+#define  SHM_NAME "/PD_SharedMemory_1"
 #define REAL_GOLD_MESSAGE "You found Real Gold!!"
 #define FAKE_GOLD_MESSAGE "You found Fool's Gold!!"
 #define EMPTY_MESSAGE ""
@@ -36,6 +36,7 @@ struct mapboard{
   unsigned char map[0];
 };
 
+char error ='e';
 
 mapboard * initSharedMemory(int rows, int columns){
   int fd, size;
@@ -66,7 +67,6 @@ vector<vector< char > > readMapFromFile(char * mapFile, int &golds){
   char c;
   ifstream mapStream(mapFile);
   mapStream >>golds;
-  cout<<"golds "<<golds;
   mapStream.get(c);
 
   while(getline(mapStream,line))
@@ -77,7 +77,7 @@ vector<vector< char > > readMapFromFile(char * mapFile, int &golds){
      mapVector.push_back(temp);
      temp.clear();
   }
-  cout<<"ve size "<<mapVector.size()<<" col "<<mapVector[0].size()<<endl;;
+  //cout<<"ve size "<<mapVector.size()<<" col "<<mapVector[0].size()<<endl;;
   return mapVector;
 }
 
@@ -128,7 +128,8 @@ int placeElementOnMap(mapboard * mbp, int elem){
 }
 
 void placeGoldsOnMap(mapboard * mbp, int goldCount){
-  placeElementOnMap(mbp, G_GOLD);
+  if(goldCount > 0)
+    placeElementOnMap(mbp, G_GOLD);
   for(int i= 0; i< (goldCount-1) ; i++)
     placeElementOnMap(mbp, G_FOOL);
   return;
@@ -251,7 +252,6 @@ const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlay
   }
 
   if(isCurrentMoveValid(mbp, thisPlayerLoc, nextPos) ){
-    cout<<"j"<<endl;
     mp[thisPlayerLoc] &= ~thisPlayer;
     thisPlayerLoc = nextPos;
     mp[thisPlayerLoc] |= thisPlayer;
@@ -266,9 +266,9 @@ int main(int argc, char *argv[])
 {
   mapboard * mbp = NULL;
   Map * gameMap = NULL;
-  int rows, cols, goldCount, thisPlayer = 0, thisPlayerLoc= 0, keyInput = 0;
+  int rows, cols, goldCount, thisPlayer = 0, thisPlayerLoc= 0, keyInput = 0, currPlaying = -1;
   bool thisPlayerFoundGold = false , thisQuitGameloop = false;
-  char * mapFile = "mymap.txt";
+  char * mapFile = "mymap_test.txt";
   const char * notice;
   unsigned char * mp; //map pointer
   vector<vector< char > > mapVector;
@@ -278,7 +278,7 @@ int main(int argc, char *argv[])
   if(shm_sem == SEM_FAILED)
   {
      shm_sem=sem_open(SHM_SM_NAME,O_CREAT,S_IRUSR|S_IWUSR,1);
-     cout<<"first player"<<endl;
+     //cout<<"first player"<<endl;
      mapVector = readMapFromFile(mapFile, goldCount);
      rows = mapVector.size();
      cols = mapVector[0].size();
@@ -286,19 +286,31 @@ int main(int argc, char *argv[])
 
      sem_wait(shm_sem);
      mbp = initSharedMemory(rows, cols);
+     error ='m';
+      write(2,&error, sizeof(char));
      mbp->rows = rows;
      mbp->cols = cols;
      mbp->playing = 0;
 
+     error ='l';
+      write(2,&error, sizeof(char));
+
      initGameMap(mbp, mapVector);
+     error ='k';
+      write(2,&error, sizeof(char));
+
      placeGoldsOnMap(mbp, goldCount);
+     error ='p';
+      write(2,&error, sizeof(char));
      thisPlayer = placeIncrementPlayerOnMap(mbp, thisPlayerLoc);
+     error ='q';
+      write(2,&error, sizeof(char));
      sem_post(shm_sem);
-     cout<<"shm init done"<<endl;
+     //cout<<"shm init done"<<endl;
    }
    else
    {
-     cout<<"not first player"<<endl;
+     //cout<<"not first player"<<endl;
      sem_wait(shm_sem);
      mbp = readSharedMemory();
      rows = mbp->rows;
@@ -307,53 +319,51 @@ int main(int argc, char *argv[])
      sem_post(shm_sem);
    }
 
-
+   error ='e';
+   write(2,&error, sizeof(char));
    try
    {
-     //Map goldMine(reinterpret_cast<const unsigned char*>(mbp->map),rows,cols);
      sem_wait(shm_sem);
-     gameMap = new Map(reinterpret_cast<const unsigned char*>(mbp->map),rows,cols);
+     //Map gameMap(reinterpret_cast<const unsigned char*>(mbp->map),rows,cols);
+     Map gameMap((mbp->map),rows,cols);
      sem_post(shm_sem);
 
-     while(keyInput != 81){ // game loop
-       keyInput =  (*gameMap).getKey();
+     while(keyInput != 81){ // game loop  key Q
+       keyInput =  gameMap.getKey();
        // code for player moves
        if(keyInput ==  108 || keyInput ==  107 || keyInput ==  106 || keyInput ==  104 ) // for l, k, j, h
        { sem_wait(shm_sem);
          notice = processPlayerMove(mbp, thisPlayerLoc,  thisPlayer, keyInput, thisPlayerFoundGold, thisQuitGameloop);
-         //sem_post(shm_sem);
 
          if(notice == FAKE_GOLD_MESSAGE || notice == REAL_GOLD_MESSAGE || notice == YOU_WON_MESSAGE){
-           (*gameMap).postNotice(notice);
+           gameMap.postNotice(notice);
          }
+         gameMap.drawMap();
+         sem_post(shm_sem);
 
          if(thisQuitGameloop)
           break;
 
-        (*gameMap).drawMap();
-        sem_post(shm_sem);
        }
 
      }
    }
    catch (const runtime_error& error)
    {
-     cout<<"runtime_error  screen not big enough"<<endl;
+     cout<<"runtime_error!!  Window size not large enough"<<endl;
+     cout<<"Exiting gracefully"<<endl;
      sem_post(shm_sem);
    }
-
-
-
-
 
    sem_wait(shm_sem);
    mbp->map[thisPlayerLoc] &= ~thisPlayer;
    mbp->playing &= ~thisPlayer;
-   delete gameMap;
+   currPlaying = mbp->playing;
    sem_post(shm_sem);
 
+   //delete gameMap;
 
-   if(mbp->playing == 0)
+   if(currPlaying == 0)
    {
       shm_unlink(SHM_NAME);
       sem_close(shm_sem);
