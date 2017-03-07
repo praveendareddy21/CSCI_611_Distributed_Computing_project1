@@ -266,6 +266,7 @@ const char * processPlayerMove(mapboard * mbp, int & thisPlayerLoc, int thisPlay
 int main(int argc, char *argv[])
 {
   mapboard * mbp = NULL;
+  Map * gameMap = NULL;
   int rows, cols, goldCount, thisPlayer = 0, thisPlayerLoc= 0, keyInput = 0;
   bool thisPlayerFoundGold = false , thisQuitGameloop = false;
   char * mapFile = "mymap.txt";
@@ -307,31 +308,49 @@ int main(int argc, char *argv[])
      sem_post(shm_sem);
    }
 
-   sem_wait(shm_sem);
-   Map goldMine(reinterpret_cast<const unsigned char*>(mbp->map),rows,cols);
-   sem_post(shm_sem);
 
-   while(keyInput != 81){ // game loop
-     keyInput = goldMine.getKey();
-     // code for player moves
-     if(keyInput ==  108 || keyInput ==  107 || keyInput ==  106 || keyInput ==  104 ) // for l, k, j, h
-     { sem_wait(shm_sem);
-       notice = processPlayerMove(mbp, thisPlayerLoc,  thisPlayer, keyInput, thisPlayerFoundGold, thisQuitGameloop);
-       sem_post(shm_sem);
+   try
+   {
+     //Map goldMine(reinterpret_cast<const unsigned char*>(mbp->map),rows,cols);
+     sem_wait(shm_sem);
+     gameMap = new Map(reinterpret_cast<const unsigned char*>(mbp->map),rows,cols);
+     sem_post(shm_sem);
 
-       if(notice == FAKE_GOLD_MESSAGE || notice == REAL_GOLD_MESSAGE || notice == YOU_WON_MESSAGE){
-         goldMine.postNotice(notice);
+     while(keyInput != 81){ // game loop
+       keyInput =  (*gameMap).getKey();
+       // code for player moves
+       if(keyInput ==  108 || keyInput ==  107 || keyInput ==  106 || keyInput ==  104 ) // for l, k, j, h
+       { sem_wait(shm_sem);
+         notice = processPlayerMove(mbp, thisPlayerLoc,  thisPlayer, keyInput, thisPlayerFoundGold, thisQuitGameloop);
+         //sem_post(shm_sem);
+
+         if(notice == FAKE_GOLD_MESSAGE || notice == REAL_GOLD_MESSAGE || notice == YOU_WON_MESSAGE){
+           (*gameMap).postNotice(notice);
+         }
+
+         if(thisQuitGameloop)
+          break;
+
+        (*gameMap).drawMap();
+        sem_post(shm_sem);
        }
 
-       if(thisQuitGameloop)
-        break;
      }
-     goldMine.drawMap();
    }
+   catch (const runtime_error& error)
+   {
+     cout<<"runtime_error  screen not big enough"<<endl;
+     sem_post(shm_sem);
+   }
+
+
+
+
 
    sem_wait(shm_sem);
    mbp->map[thisPlayerLoc] &= ~thisPlayer;
    mbp->playing &= ~thisPlayer;
+   delete gameMap;
    sem_post(shm_sem);
 
 
